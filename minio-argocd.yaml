@@ -14,9 +14,23 @@ spec:
     repoURL: https://github.com/viethqb/argocd-vault-demo.git
     path: minio
     targetRevision: main
-    helm:
-      valueFiles:
-        - minio-values.yaml
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            auth:
+              rootUser: <path:kv-v2/data/argocd#admin>
+              rootPassword: <path:kv-v2/data/argocd#password>
+            ingress:
+              enabled: true
+              ingressClassName: "nginx"
+              hostname: minio.lakehouse.local
+              annotations:
+                nginx.ingress.kubernetes.io/proxy-body-size: 1024m
+            defaultBuckets: "lakehouse, airflow, risingwave"
+            persistence:
+              size: 50Gi
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
