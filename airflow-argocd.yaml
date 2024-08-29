@@ -1,0 +1,216 @@
+# postgresql-helm-argo-application.yml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airflow
+  namespace: argocd
+spec:
+  destination:
+    namespace: airflow
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/viethqb/argocd-vault-demo.git
+    path: airflow
+    targetRevision: main
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            defaultAirflowRepository: viet1846/airflow
+
+            defaultAirflowTag: "2.8.3"
+
+            airflowVersion: "2.8.3"
+
+            # Select certain nodes for airflow pods.
+            nodeSelector: {}
+            affinity: {}
+            tolerations: []
+            topologySpreadConstraints: []
+            schedulerName: ~
+
+            # Ingress configuration
+            ingress:
+              enabled: ~
+              web:
+                # Enable web ingress resource
+                enabled: true
+
+                # Annotations for the web Ingress
+                annotations: {}
+
+                # The path for the web Ingress
+                path: "/"
+
+                # The pathType for the above path (used only with Kubernetes v1.19 and above)
+                pathType: "ImplementationSpecific"
+
+                # The hostname for the web Ingress (Deprecated - renamed to `ingress.web.hosts`)
+                host: "airflow.lakehouse.local"
+
+                # The hostnames or hosts configuration for the web Ingress
+                hosts: []
+                #   # The hostname for the web Ingress (can be templated)
+                # - name: ""
+                #   # configs for web Ingress TLS
+                #   tls:
+                #     # Enable TLS termination for the web Ingress
+                #     enabled: false
+                #     # the name of a pre-created Secret containing a TLS private key and certificate
+                #     secretName: ""
+
+                # The Ingress Class for the web Ingress (used only with Kubernetes v1.19 and above)
+                ingressClassName: "nginx"
+
+                # configs for web Ingress TLS (Deprecated - renamed to `ingress.web.hosts[*].tls`)
+                tls:
+                  # Enable TLS termination for the web Ingress
+                  enabled: false
+                  # the name of a pre-created Secret containing a TLS private key and certificate
+                  secretName: ""
+
+                # HTTP paths to add to the web Ingress before the default path
+                precedingPaths: []
+
+                # Http paths to add to the web Ingress after the default path
+                succeedingPaths: []
+
+            executor: "KubernetesExecutor"
+
+            extraEnv: |
+              - name: AIRFLOW__CORE__DAGS_FOLDER
+                value: '/opt/airflow/dags/repo/airflow/dags'
+              - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+                value: 'Asia/Ho_Chi_Minh'
+              - name: AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT
+                value: '300'
+
+            # Airflow database & redis config
+            data:
+              # Otherwise pass connection values in
+              metadataConnection:
+                user: postgres
+                pass: postgres
+                protocol: postgresql
+                host: ~
+                port: 5432
+                db: postgres
+                sslmode: disable
+
+            webserverSecretKey: 2cbfd5b635391cae990a3b0e7553a68e
+
+            scheduler:
+              enabled: true
+              hostAliases: []
+              #  - ip: "127.0.0.1"
+              #    hostnames:
+              #      - "foo.local"
+              #  - ip: "10.1.2.3"
+              #    hostnames:
+              #      - "foo.remote"
+              replicas: 1
+              resources: {}
+              #  limits:
+              #   cpu: 100m
+              #   memory: 128Mi
+              #  requests:
+              #   cpu: 100m
+              #   memory: 128Mi
+              nodeSelector: {}
+
+            # Airflow webserver settings
+            webserver:
+              enabled: true
+              replicas: 1
+              resources: {}
+              #   limits:
+              #     cpu: 100m
+              #     memory: 128Mi
+              #   requests:
+              #     cpu: 100m
+              #     memory: 128Mi
+
+              defaultUser:
+                enabled: true
+                role: Admin
+                username: admin
+                email: admin@example.com
+                firstName: admin
+                lastName: user
+                password: <path:kv-v2/data/argocd#password>
+              nodeSelector: {}
+              env: []
+
+            triggerer:
+              enabled: true
+              replicas: 1
+              persistence:
+                enabled: true
+                size: 100Gi
+              resources: {}
+              #  limits:
+              #   cpu: 100m
+              #   memory: 128Mi
+              #  requests:
+              #   cpu: 100m
+              #   memory: 128Mi
+              nodeSelector: {}
+              affinity: {}
+              env: []
+
+            # StatsD settings
+            statsd:
+              enabled: true
+              resources: {}
+              #   limits:
+              #     cpu: 100m
+              #     memory: 128Mi
+              #   requests:
+              #     cpu: 100m
+              #     memory: 128Mi
+              nodeSelector: {}
+              env: []
+
+            redis:
+              enabled: false
+
+            # Not recommended for production
+            postgresql:
+              enabled: true
+              auth:
+                enablePostgresUser: true
+                postgresPassword: postgres
+                username: "admin"
+                password: "admin"
+
+            config:
+              logging:
+                remote_logging: "True"
+                remote_base_log_folder: "s3://airflow/logs"
+                remote_log_conn_id: "s3_default"
+                encrypt_s3_logs: "False"
+            # Git sync
+            dags:
+              gitSync:
+                enabled: true
+
+                repo: https://github.com/viethqb/spark-trino-minio-iceberg-k8s-demo.git
+                branch: main
+                rev: HEAD
+                depth: 1
+                subPath: "airflow"
+            createuserjob:  
+              useHelmHooks: false  
+              applyCustomEnv: false
+            migratedatabasejob:  
+              enabled: true  
+              useHelmHooks: false
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+      prune: true
