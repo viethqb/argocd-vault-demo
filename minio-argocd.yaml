@@ -1,0 +1,25 @@
+# postgresql-helm-argo-application.yml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minio
+  namespace: argocd
+spec:
+  destination:
+    namespace: minio
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/viethqb/argocd-vault-demo.git
+    path: minio
+    targetRevision: main
+    helm:
+      valueFiles:
+        - minio-values.yaml
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+      prune: true

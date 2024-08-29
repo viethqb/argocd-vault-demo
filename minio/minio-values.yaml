@@ -1,6 +1,6 @@
 auth:
-  rootUser: "admin"
-  rootPassword: "password"
+  rootUser: <path:kv-v2/data/argocd#admin>
+  rootPassword: <path:kv-v2/data/argocd#password>
 ingress:
   enabled: true
   ingressClassName: "nginx"
