@@ -202,12 +202,12 @@ spec:
                 rev: HEAD
                 depth: 1
                 subPath: "airflow"
-            createuserjob:  
-              useHelmHooks: false  
-              applyCustomEnv: false
-            migratedatabasejob:  
-              enabled: true  
+            createUserJob:
               useHelmHooks: false
+              applyCustomEnv: false
+            migrateDatabaseJob:
+              useHelmHooks: false
+              applyCustomEnv: false
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
