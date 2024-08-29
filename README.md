@@ -14,7 +14,7 @@ vault token create
 # enable key-value engine
 vault secrets enable kv-v2
 # add the password to path kv-v2/argocd
-vault kv put kv-v2/argocd password="argocd"
+vault kv put kv-v2/argocd admin="admin" password="argocd"
 # add a policy to read the previously created secret
 vault policy write argocd - <<EOF
 path "kv-v2/data/argocd" {
@@ -38,4 +38,5 @@ echo $ARGOPW
 
 ```bash
 k apply -f avp-argocd.yaml
+k apply -f minio-argocd.yaml 
 ```
