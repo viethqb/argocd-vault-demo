@@ -20,10 +20,10 @@ spec:
         - name: HELM_VALUES
           value: |
             auth:
-              rootUser: <path:kv-v2/data/argocd#admin>
-              rootPassword: <path:kv-v2/data/argocd#password>
+              rootUser: <path:kv-v2/data/lakehouse/minio#user>
+              rootPassword: <path:kv-v2/data/lakehouse/minio#password>
             ingress:
-              enabled: true
+              enabled: false
               ingressClassName: "nginx"
               hostname: minio.lakehouse.local
               annotations:

@@ -6,22 +6,41 @@ kind create cluster --name dev --config kind-config.yaml
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo update
 helm search repo hashicorp/vault
-helm install vault hashicorp/vault -n vault --create-namespace --values vault-server-values.yaml --create-namespace --version 0.28.1 --debug
+helm upgrade --install vault hashicorp/vault -n vault --create-namespace --create-namespace --version 0.28.1 --debug
+
+kubectl -n vault delete pvc --all
+kubectl exec --stdin=true --tty=true vault-0 -n vault -- vault status
+kubectl exec --stdin=true --tty=true vault-0 -n vault -- vault operator init
+
+# Unseal Key 1: ody+EXrvOmSnTfTCfnd5e7Nn0ZXQWrOYX4FyDJVZO8w6
+# Unseal Key 2: CBsqvavOY0TqfbZmSup5NWXkP0b/2dWQ0gnkkFKRLiPQ
+# Unseal Key 3: P/YemP4nWGHW+40vIqYwKifj0uk8wT2bqL3SJ2lUBYX+
+# Unseal Key 4: D1Y90a9xAYvyi1dFHMiAuLu+yeA+mIt564CJspiFLAvD
+# Unseal Key 5: I4nZdXo41+TV6QgMtdcO7cANYZJ+Y8+pCZS8GYIPMnGq
+
+# Initial Root Token: hvs.Uj8X0oEIUkKhh4TK7lvPa48P
+
+kubectl exec --stdin=true --tty=true vault-0 -n vault -- vault operator unseal
 ```
 
 ```bash
 k -n vault exec -it vault-0 sh
-vault login root 
+vault login hvs.Uj8X0oEIUkKhh4TK7lvPa48P 
 vault token create
-#hvs.D72pVl1lFSIqwVmDOCZnEB5X
 
 # enable key-value engine
 vault secrets enable kv-v2
 # add the password to path kv-v2/argocd
-vault kv put kv-v2/argocd admin="admin" password="argocd123"
+vault kv put kv-v2/lakehouse/minio user="admin" password="password" endpoint="minio.minio.svc.cluster.local:9000" http-endpoint="http://minio.minio.svc.cluster.local:9000"
+vault kv put kv-v2/lakehouse/metastore-postgres user="admin" password="admin" database="metastore_db" postgres-password="admin" jdbc-url="jdbc:postgresql://metastore-db-postgresql-hl:5432/metastore_db"
 # add a policy to read the previously created secret
-vault policy write argocd - <<EOF
-path "kv-v2/data/argocd" {
+vault policy write minio - <<EOF
+path "kv-v2/data/lakehouse/minio" {
+  capabilities = ["read"]
+}
+EOF
+vault policy write metastore-postgres - <<EOF
+path "kv-v2/data/lakehouse/metastore-postgres" {
   capabilities = ["read"]
 }
 EOF
