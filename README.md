@@ -60,6 +60,5 @@ echo $ARGOPW
 ```
 
 ```bash
-k apply -f avp-argocd.yaml
 k apply -f minio-argocd.yaml 
 ```
